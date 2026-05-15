@@ -1,1370 +1,365 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>7-Day Restart System | Desktop Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary: #3B82F6;
-      --secondary: #10B981;
-      --danger: #EF4444;
-      --warning: #F59E0B;
-      --success: #10B981;
-      --dark: #1F2937;
-      --light: #F9FAFB;
-      --border: #E5E7EB;
-      --text-primary: #111827;
-      --text-secondary: #6B7280;
-      --bg-card: #FFFFFF;
-    }
-
-    html, body {
-      height: 100%;
-      width: 100%;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      color: var(--text-primary);
-      line-height: 1.6;
-      overflow: hidden;
-    }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      grid-template-rows: 80px 1fr;
-      height: 100vh;
-      gap: 0;
-    }
-
-    /* HEADER */
-    .header {
-      grid-column: 1 / -1;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      z-index: 100;
-    }
-
-    .header h1 {
-      font-size: 26px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-stats {
-      display: flex;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    .header-stat {
-      text-align: center;
-    }
-
-    .header-stat-label {
-      font-size: 12px;
-      opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .header-stat-value {
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      grid-column: 1;
-      grid-row: 2;
-      background: white;
-      border-right: 1px solid var(--border);
-      padding: 1.5rem 0;
-      overflow-y: auto;
-      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .sidebar-title {
-      padding: 0 1.5rem;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-      margin-bottom: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .sidebar-title:first-child {
-      margin-top: 0;
-    }
-
-    .day-item {
-      padding: 12px 1.5rem;
-      cursor: pointer;
-      border-left: 3px solid transparent;
-      transition: all 0.2s;
-      font-weight: 500;
-      font-size: 14px;
-      color: var(--text-primary);
-    }
-
-    .day-item:hover {
-      background: var(--light);
-      border-left-color: var(--primary);
-    }
-
-    .day-item.active {
-      background: #EFF6FF;
-      border-left-color: var(--primary);
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    .day-item.completed::before {
-      content: '✓';
-      display: inline-block;
-      margin-right: 8px;
-      color: var(--secondary);
-      font-weight: 700;
-    }
-
-    .action-buttons {
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 1.5rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .action-buttons button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .export-btn {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-    }
-
-    .export-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-    }
-
-    .export-btn:active {
-      transform: translateY(0);
-    }
-
-    /* MAIN CONTENT */
-    .main {
-      grid-column: 2;
-      grid-row: 2;
-      background: var(--light);
-      overflow-y: auto;
-      padding: 2rem;
-    }
-
-    .content-wrapper {
-      max-width: 1800px;
-      margin: 0 auto;
-    }
-
-    /* GRID LAYOUT */
-    .page-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .page-grid.full {
-      grid-template-columns: 1fr;
-    }
-
-    .page-grid.three-col {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-
-    /* CARDS */
-    .card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s;
-    }
-
-    .card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-      border-bottom: 2px solid var(--light);
-      padding-bottom: 1rem;
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .card-title i {
-      font-size: 20px;
-      color: var(--primary);
-    }
-
-    .card-subtitle {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-    }
-
-    /* TASKS SECTION */
-    .tasks-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .task-item {
-      background: var(--light);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .task-item:hover {
-      border-color: var(--primary);
-      background: #EFF6FF;
-    }
-
-    .task-item.completed {
-      background: rgba(16, 185, 129, 0.05);
-      border-color: var(--secondary);
-    }
-
-    .task-item.completed .task-text {
-      text-decoration: line-through;
-      color: var(--text-secondary);
-    }
-
-    .task-checkbox {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--border);
-      border-radius: 4px;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 2px;
-    }
-
-    .task-item:hover .task-checkbox {
-      border-color: var(--primary);
-    }
-
-    .task-item.completed .task-checkbox {
-      background: var(--secondary);
-      border-color: var(--secondary);
-      color: white;
-    }
-
-    .task-content {
-      flex: 1;
-    }
-
-    .task-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
-    .task-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .task-xp {
-      font-size: 12px;
-      font-weight: 700;
-      color: white;
-      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-      padding: 4px 10px;
-      border-radius: 4px;
-    }
-
-    .task-meta {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    /* ADD TASK FORM */
-    .add-task-form {
-      background: var(--light);
-      border: 2px dashed var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-top: 1rem;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 80px;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .form-grid input {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-
-    .form-grid input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .form-grid button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-    }
-
-    .form-grid button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-    }
-
-    .form-grid button:active {
-      transform: translateY(0);
-    }
-
-    /* JOURNAL SECTION */
-    .journal-form {
-      margin-bottom: 1rem;
-    }
-
-    .journal-form label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text-primary);
-    }
-
-    .journal-form textarea {
-      width: 100%;
-      height: 150px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 13px;
-      resize: vertical;
-      transition: all 0.2s;
-      margin-bottom: 8px;
-    }
-
-    .journal-form textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .journal-form button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-    }
-
-    .journal-form button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-    }
-
-    .journal-form button:active {
-      transform: translateY(0);
-    }
-
-    /* REWARDS SECTION */
-    .reward-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .reward-item {
-      background: var(--light);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s;
-    }
-
-    .reward-item:hover {
-      border-color: var(--warning);
-      background: rgba(245, 158, 11, 0.05);
-    }
-
-    .reward-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .reward-xp {
-      font-size: 13px;
-      font-weight: 700;
-      color: white;
-      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-      padding: 4px 10px;
-      border-radius: 4px;
-    }
-
-    /* STREAK ALERT */
-    .streak-alert {
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-      color: white;
-      padding: 1rem 1.5rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-      display: none;
-      font-weight: 600;
-      font-size: 14px;
-      text-align: center;
-      animation: slideIn 0.3s ease;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-    }
-
-    .streak-alert.show {
-      display: block;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* MODAL NOTIFICATION STYLES */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      animation: fadeIn 0.3s ease;
-      backdrop-filter: blur(2px);
-    }
-
-    .modal-overlay.show {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    .modal-content {
-      background: white;
-      border-radius: 16px;
-      padding: 2.5rem;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: modalSlideIn 0.3s ease;
-      text-align: center;
-    }
-
-    @keyframes modalSlideIn {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    .modal-icon {
-      font-size: 48px;
-      margin-bottom: 1rem;
-      animation: iconBounce 0.6s ease;
-    }
-
-    @keyframes iconBounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .modal-icon.success {
-      color: var(--secondary);
-    }
-
-    .modal-icon.info {
-      color: var(--primary);
-    }
-
-    .modal-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    .modal-message {
-      font-size: 15px;
-      color: var(--text-secondary);
-      margin-bottom: 2rem;
-      line-height: 1.6;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-
-    .modal-btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      min-width: 120px;
-    }
-
-    .modal-btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .modal-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .modal-btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .modal-btn-secondary {
-      background: var(--light);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-    }
-
-    .modal-btn-secondary:hover {
-      background: var(--border);
-      transform: translateY(-2px);
-    }
-
-    .modal-btn-secondary:active {
-      transform: translateY(0);
-    }
-
-    /* SCROLLBAR */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--text-secondary);
-    }
-
-    /* DARK MODE */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --text-primary: #F3F4F6;
-        --text-secondary: #9CA3AF;
-        --border: #374151;
-        --bg-card: #111827;
-        --light: #0F172A;
-      }
-
-      body {
-        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-      }
-
-      .sidebar {
-        background: #1F2937;
-        border-right-color: var(--border);
-      }
-
-      .main {
-        background: #0F172A;
-      }
-
-      .card {
-        background: #1F2937;
-      }
-
-      .task-item {
-        background: #111827;
-      }
-
-      .task-item:hover {
-        background: #1F2937;
-      }
-
-      .add-task-form {
-        background: #111827;
-        border-color: var(--border);
-      }
-
-      .form-grid input {
-        background: #111827;
-        color: white;
-        border-color: var(--border);
-      }
-
-      .modal-content {
-        background: #1F2937;
-        color: white;
-      }
-
-      .modal-title {
-        color: white;
-      }
-
-      .modal-message {
-        color: #9CA3AF;
-      }
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 1200px) {
-      .page-grid.three-col {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .dashboard {
-        grid-template-columns: 240px 1fr;
-      }
-    }
-
-    @media (max-width: 900px) {
-      .dashboard {
-        grid-template-columns: 200px 1fr;
-      }
-
-      .header-stats {
-        gap: 1rem;
-      }
-
-      .header-stat-value {
-        font-size: 24px;
-      }
-
-      .page-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- MODAL OVERLAY -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-icon" id="modal-icon">✓</div>
-      <div class="modal-title" id="modal-title">Saved!</div>
-      <div class="modal-message" id="modal-message">Your changes have been saved.</div>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-primary" onclick="closeModal()">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="dashboard">
-    <!-- HEADER -->
-    <div class="header">
-      <h1>
-        <i class="fas fa-fire"></i>
-        7-Day Restart System
-      </h1>
-      <div class="header-stats">
-        <div class="header-stat">
-          <div class="header-stat-label">Total XP</div>
-          <div class="header-stat-value" id="header-xp">0</div>
-        </div>
-        <div class="header-stat">
-          <div class="header-stat-label">Streak</div>
-          <div class="header-stat-value" id="header-streak">0</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <div class="sidebar-title">Days</div>
-      <div id="day-nav"></div>
-
-      <div class="sidebar-title">Actions</div>
-      <div class="action-buttons">
-        <button class="export-btn" onclick="exportData()">
-          <i class="fas fa-download"></i> Export Progress
-        </button>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main">
-      <div class="content-wrapper">
-        <div class="streak-alert" id="streak-alert">
-          🔥 Keep the fire alive! Don't break the chain!
-        </div>
-
-        <div class="page-grid">
-          <!-- LEFT: TASKS -->
-          <div>
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">
-                    <i class="fas fa-tasks"></i>
-                    Day <span id="current-day">1</span> Tasks
-                  </div>
-                  <div class="card-subtitle">Complete tasks to earn XP</div>
-                </div>
-              </div>
-              <div class="tasks-container" id="tasks-container"></div>
-              
-              <div class="add-task-form">
-                <label style="display: block; margin-bottom: 10px; font-weight: 600; font-size: 13px;">
-                  <i class="fas fa-plus-circle"></i> Add Custom Task
-                </label>
-                <div class="form-grid">
-                  <input type="text" id="task-input" placeholder="Task name...">
-                  <input type="number" id="xp-input" placeholder="XP" min="5" max="100" value="20">
-                </div>
-                <button onclick="addCustomTask()" style="width: 100%; padding: 10px;">Add Task</button>
-              </div>
-
-              <div id="custom-tasks-container" style="margin-top: 1.5rem;"></div>
-            </div>
-          </div>
-
-          <!-- RIGHT: JOURNAL & REWARDS -->
-          <div style="display: flex; flex-direction: column; gap: 2rem;">
-            <!-- GOALS -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">
-                    <i class="fas fa-star"></i>
-                    Tomorrow's Goals
-                  </div>
-                  <div class="card-subtitle">Plan ahead for success</div>
-                </div>
-              </div>
-              <div class="journal-form">
-                <textarea id="goals-input" placeholder="What will you accomplish tomorrow?"></textarea>
-                <button onclick="saveGoals()">Save Goals</button>
-              </div>
-            </div>
-
-            <!-- AUDIT -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">
-                    <i class="fas fa-pen"></i>
-                    Today's Audit
-                  </div>
-                  <div class="card-subtitle">Be brutally honest</div>
-                </div>
-              </div>
-              <div class="journal-form">
-                <textarea id="audit-input" placeholder="What went well? What was hard? Any relapses? Be honest."></textarea>
-                <button onclick="saveAudit()">Save Audit</button>
-              </div>
-            </div>
-
-            <!-- REWARDS -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">
-                    <i class="fas fa-trophy"></i>
-                    Rewards
-                  </div>
-                  <div class="card-subtitle">Unlock as you progress</div>
-                </div>
-              </div>
-              <div class="reward-list" id="reward-list"></div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const DAYS = 7;
-    const STORAGE_KEY = 'restart_system_data';
-    const rewards = [
-  {
-    id: 'reward-100',
-    xp: 100,
-    title: '1 Day Off'
-  },
-  {
-    id: 'reward-250',
-    xp: 250,
-    title: 'Next Tier'
-  },
-  {
-    id: 'reward-500',
-    xp: 500,
-    title: 'Confidence'
-  }
-];
-
-    const tasksData = {
-      1: [
-        { name: 'Cold shower (2 min cold)', xp: 15, category: 'Routine' },
-        { name: 'Morning journal (15 min)', xp: 10, category: 'Routine' },
-        { name: 'Review map/filter/lambda basics', xp: 30, category: 'Python' },
-        { name: 'Write 3 working examples', xp: 40, category: 'Python' },
-        { name: 'Understand reduce, 2 examples', xp: 30, category: 'Python' },
-        { name: 'No phone outside coding', xp: 20, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      2: [
-        { name: 'Cold shower (2 min cold)', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Build map+filter example (hostel rooms)', xp: 50, category: 'Python' },
-        { name: 'Solve 2 DSA problems', xp: 40, category: 'DSA' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      3: [
-        { name: 'Cold shower', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Reduce deep dive & 3 examples', xp: 50, category: 'Python' },
-        { name: 'Combine map/filter/reduce in one function', xp: 40, category: 'Python' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      4: [
-        { name: 'Cold shower', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Decorators intro & theory (30 min)', xp: 20, category: 'Python' },
-        { name: 'Build timing decorator', xp: 40, category: 'Python' },
-        { name: 'Build logging decorator', xp: 40, category: 'Python' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      5: [
-        { name: 'Cold shower', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Custom decorator for real use', xp: 50, category: 'Python' },
-        { name: 'CONNECT backend: one small fix', xp: 40, category: 'CONNECT' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      6: [
-        { name: 'Cold shower', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Hash map implementation (insertion, lookup, collision)', xp: 60, category: 'DSA' },
-        { name: 'Solve 2 hash map DSA problems', xp: 40, category: 'DSA' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ],
-      7: [
-        { name: 'Cold shower', xp: 15, category: 'Routine' },
-        { name: 'Morning journal', xp: 10, category: 'Routine' },
-        { name: 'Review all code from Days 1-6', xp: 30, category: 'Python' },
-        { name: 'Solve 3 consolidation problems', xp: 50, category: 'DSA' },
-        { name: 'Plan Week 2 system', xp: 20, category: 'Planning' },
-        { name: 'No relapse, clean day', xp: 25, category: 'Discipline' },
-        { name: 'Evening audit & journal', xp: 10, category: 'Routine' }
-      ]
-    };
-
-let state = {
-  completed: {},
-  customTasks: {},
-  currentDay: 1,
-  totalXP: 0,
-  streak: 0,
-  goals: {},
-  audit: {},
-  rewardsUnlocked: [],
-  completedDates: {}
+// ===== RENDERING =====
+function renderDayNav(){
+const nav=$('dayNav');nav.innerHTML='';
+for(let d=1;d<=DAYS;d++){
+const pct=calcDayPct(d);
+const di=el('div','day-item'+(d===S.currentDay?' active':'')+(pct>=80?' done':''),
+`<span class="dot"></span>Day ${d}<span style="margin-left:auto;font-size:11px;color:var(--text3)">${pct}%</span>`);
+di.onclick=()=>switchDay(d);nav.appendChild(di);
+}
+}
+function switchDay(d){S.currentDay=d;save();renderDayNav();if(currentPage==='dashboard')renderDashboard();}
+
+let currentPage='dashboard';
+function switchPage(pg){
+currentPage=pg;
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+$('pg-'+pg).classList.add('active');
+document.querySelectorAll('.nav-item').forEach(n=>{n.classList.toggle('active',n.dataset.page===pg)});
+const titles={dashboard:'Dashboard',goals:'Goals',audits:'Audits',rewards:'Rewards & Badges',stats:'Statistics'};
+const subs={dashboard:'Overview of your progress',goals:'Plan and track your goals',audits:'Daily self-reflection',rewards:'Unlock rewards with XP',stats:'Analytics & insights'};
+$('pageTitle').textContent=titles[pg]||pg;
+$('pageSubtitle').textContent=subs[pg]||'';
+const renderers={dashboard:renderDashboard,goals:renderGoals,audits:renderAudits,rewards:renderRewardsPage,stats:renderStats};
+if(renderers[pg])renderers[pg]();
+}
+
+// DASHBOARD
+function renderDashboard(){
+const pg=$('pg-dashboard');const d=S.currentDay;const pct=calcDayPct(d);const overall=calcOverallPct();
+pg.innerHTML=`
+<div class="grid-4">
+<div class="stat-card purple"><div class="icon"><i class="fas fa-bolt"></i></div><div class="val">${S.totalXP}</div><div class="label">Total XP Earned</div></div>
+<div class="stat-card amber"><div class="icon"><i class="fas fa-fire"></i></div><div class="val">${S.streak}</div><div class="label">Day Streak</div></div>
+<div class="stat-card green"><div class="icon"><i class="fas fa-check-double"></i></div><div class="val">${overall}%</div><div class="label">Overall Progress</div></div>
+<div class="stat-card blue"><div class="icon"><i class="fas fa-gift"></i></div><div class="val">${S.unlockedRewards.length}/${REWARDS.length}</div><div class="label">Rewards Unlocked</div></div>
+</div>
+
+<div class="grid-2">
+<div>
+<div class="card" id="dashTasks">
+<div class="card-head"><h3><i class="fas fa-tasks"></i>Day ${d} Tasks</h3><span class="task-xp" style="font-size:12px">${pct}% done</span></div>
+<div class="pbar"><div class="fill green" style="width:${pct}%"></div></div>
+<div id="dashTaskList" style="margin-top:14px"></div>
+<div class="add-form"><input class="input" id="dNewTask" placeholder="Add custom task..."><input class="input xp-input" id="dNewXP" type="number" value="20" min="5" max="50" placeholder="XP"><button class="btn btn-primary btn-sm" id="dAddBtn"><i class="fas fa-plus"></i>Add</button></div>
+</div>
+
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-star"></i>Today's Goal</h3></div>
+<textarea class="textarea" id="dGoal" placeholder="What will you accomplish today?">${S.goals[d]||''}</textarea>
+<button class="btn btn-primary btn-sm" id="dSaveGoal" style="margin-top:8px"><i class="fas fa-save"></i>Save Goal</button>
+</div>
+</div>
+
+<div>
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-clipboard-check"></i>Today's Audit</h3></div>
+<textarea class="textarea" id="dAudit" placeholder="What went well? What was hard? Be honest.">${S.audits[d]||''}</textarea>
+<button class="btn btn-primary btn-sm" id="dSaveAudit" style="margin-top:8px"><i class="fas fa-save"></i>Save Audit</button>
+</div>
+
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-trophy"></i>Reward Progress</h3></div>
+<div id="dashRewards"></div>
+</div>
+
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-clock"></i>Recent Activity</h3></div>
+<div id="dashActivity"></div>
+</div>
+</div>
+</div>`;
+
+// Render task list
+renderTaskList($('dashTaskList'),d);
+
+// Render rewards mini
+const rc=$('dashRewards');
+REWARDS.forEach(r=>{
+const unlocked=S.unlockedRewards.includes(r.id);
+const pctR=Math.min(100,Math.round(S.totalXP/r.xp*100));
+rc.innerHTML+=`<div class="reward ${unlocked?'unlocked':'locked'}"><div class="r-icon">${unlocked?'✅':'🔒'}</div><div class="r-info"><div class="r-name">${r.icon} ${r.title}</div><div class="r-xp">${r.xp} XP${unlocked?'':` — ${pctR}%`}</div>${unlocked?'':'<div class="pbar"><div class="fill" style="width:'+pctR+'%"></div></div>'}</div></div>`;
+});
+
+// Activity
+const ac=$('dashActivity');
+if(S.activity.length===0)ac.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px">No activity yet. Complete tasks to get started!</div>';
+else S.activity.slice(0,8).forEach(a=>{
+ac.innerHTML+=`<div class="activity-item"><div class="activity-dot ${a.type}"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${fmtDate(a.time)}</div></div></div>`;
+});
+
+// Events
+$('dAddBtn').onclick=()=>addTask(d);
+$('dSaveGoal').onclick=()=>{S.goals[d]=$('dGoal').value;save();addActivity(`Saved goal for Day ${d}`,'purple');toast('Goal saved!');};
+$('dSaveAudit').onclick=()=>{S.audits[d]=$('dAudit').value;save();addActivity(`Saved audit for Day ${d}`,'purple');toast('Audit saved!');};
+$('dNewTask').onkeydown=e=>{if(e.key==='Enter')addTask(d)};
+}
+
+function renderTaskList(container,day){
+container.innerHTML='';
+const bt=TASKS[day]||[];
+bt.forEach((t,i)=>{
+const tid=`t-${day}-${i}`;const done=S.completed[tid];
+const d=el('div','task'+(done?' done':''),
+`<div class="check"><i class="fas fa-check"></i></div><div class="task-body"><div class="task-name">${t.name}</div><div class="task-meta"><span>${t.cat}</span></div></div><span class="task-xp">+${t.xp}</span>`);
+d.onclick=()=>toggleTask(tid);container.appendChild(d);
+});
+const ct=S.customTasks[day]||[];
+if(ct.length){
+container.appendChild(el('div','',`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:12px 0 4px">Custom Tasks</div>`));
+ct.forEach(t=>{
+const done=S.completed[t.id];
+const d=el('div','task'+(done?' done':''),
+`<div class="check"><i class="fas fa-check"></i></div><div class="task-body"><div class="task-name">${t.name}</div><div class="task-meta">Custom</div></div><span class="task-xp">+${t.xp}</span><button class="task-del" data-id="${t.id}" data-day="${day}"><i class="fas fa-trash"></i></button>`);
+d.querySelector('.check').onclick=e=>{e.stopPropagation();toggleTask(t.id)};
+d.querySelector('.task-del').onclick=e=>{e.stopPropagation();deleteTask(t.id,day)};
+d.querySelector('.task-body').onclick=()=>toggleTask(t.id);
+container.appendChild(d);
+});
+}
+}
+
+function toggleTask(tid){
+S.completed[tid]=!S.completed[tid];
+if(S.completed[tid]){S.completedDates[tid]=Date.now();addActivity(`Completed task`,'green')}
+else{delete S.completedDates[tid]}
+updateGlobals();if(currentPage==='dashboard')renderDashboard();renderDayNav();
+}
+
+function addTask(day){
+const ni=$('dNewTask'),xi=$('dNewXP');
+if(!ni||!ni.value.trim()){toast('Enter a task name','error');return}
+if(!S.customTasks[day])S.customTasks[day]=[];
+const xp=Math.min(Math.max(parseInt(xi.value)||20,5),50);
+const t={id:uuid(),name:ni.value.trim(),xp};
+S.customTasks[day].push(t);
+addActivity(`Added custom task: ${t.name}`,'purple');
+updateGlobals();ni.value='';xi.value=20;
+toast('Task added!');if(currentPage==='dashboard')renderDashboard();renderDayNav();
+}
+
+function deleteTask(tid,day){
+showModal('Delete Task','Are you sure you want to delete this task?',()=>{
+S.customTasks[day]=S.customTasks[day].filter(t=>t.id!==tid);
+delete S.completed[tid];delete S.completedDates[tid];
+addActivity('Deleted a custom task','amber');
+updateGlobals();if(currentPage==='dashboard')renderDashboard();renderDayNav();
+toast('Task deleted');
+});
+}
+
+// GOALS PAGE
+function renderGoals(){
+const pg=$('pg-goals');let filterDay='all';let search='';
+function render(){
+pg.innerHTML=`
+<div class="grid-2" style="margin-bottom:16px"><div class="search-bar"><i class="fas fa-search"></i><input class="input" id="goalSearch" placeholder="Search goals..." value="${search}"></div>
+<div class="tabs" id="goalTabs"></div></div>
+<div class="card"><div class="card-head"><h3><i class="fas fa-plus-circle"></i>Add Goal</h3></div>
+<div style="display:flex;gap:8px;align-items:flex-end"><select class="select" id="goalDay" style="width:120px">${Array.from({length:7},(_,i)=>`<option value="${i+1}"${i+1===S.currentDay?' selected':''}>Day ${i+1}</option>`).join('')}</select>
+<textarea class="textarea" id="goalText" placeholder="Write your goal..." style="min-height:60px;flex:1"></textarea>
+<button class="btn btn-primary" id="goalAddBtn"><i class="fas fa-save"></i>Save</button></div></div>
+<div id="goalList"></div>`;
+
+const tabs=$('goalTabs');
+['all',...Array.from({length:7},(_,i)=>''+(i+1))].forEach(v=>{
+const t=el('button','tab'+(filterDay===v?' active':''),v==='all'?'All':'Day '+v);
+t.onclick=()=>{filterDay=v;render()};tabs.appendChild(t);
+});
+
+const list=$('goalList');
+for(let d=1;d<=DAYS;d++){
+if(filterDay!=='all'&&''+d!==filterDay)continue;
+const g=S.goals[d];if(!g)continue;
+if(search&&!g.toLowerCase().includes(search.toLowerCase()))continue;
+list.innerHTML+=`<div class="entry"><div class="entry-head"><span class="entry-day">Day ${d}</span></div><div class="entry-text">${g}</div>
+<div class="entry-actions"><button class="btn btn-ghost btn-sm" onclick="editGoal(${d})"><i class="fas fa-edit"></i>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteGoal(${d})"><i class="fas fa-trash"></i>Delete</button></div></div>`;
+}
+if(!list.innerHTML)list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">No goals found</div>';
+
+$('goalSearch').oninput=e=>{search=e.target.value;render()};
+$('goalAddBtn').onclick=()=>{
+const d=+$('goalDay').value,t=$('goalText').value.trim();
+if(!t){toast('Write a goal first','error');return}
+S.goals[d]=t;save();addActivity(`Saved goal for Day ${d}`,'purple');toast('Goal saved!');updateGlobals();render();
+};
+}
+render();
+}
+window.editGoal=function(d){
+const pg=$('pg-goals');
+showModal('Edit Goal',`Current goal for Day ${d}: "${(S.goals[d]||'').substring(0,50)}..."`,()=>{
+const newText=prompt('Edit goal for Day '+d+':',S.goals[d]||'');
+if(newText!==null){S.goals[d]=newText;save();toast('Goal updated!');renderGoals();}
+});
+};
+window.deleteGoal=function(d){
+showModal('Delete Goal','Delete goal for Day '+d+'?',()=>{
+delete S.goals[d];save();addActivity(`Deleted goal for Day ${d}`,'amber');toast('Goal deleted');renderGoals();
+});
 };
 
-    function loadState() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        state = {
-  ...state,
-  ...JSON.parse(saved)
+// AUDITS PAGE
+function renderAudits(){
+const pg=$('pg-audits');let filterDay='all';let search='';
+function render(){
+pg.innerHTML=`
+<div class="grid-2" style="margin-bottom:16px"><div class="search-bar"><i class="fas fa-search"></i><input class="input" id="auditSearch" placeholder="Search audits..." value="${search}"></div>
+<div class="tabs" id="auditTabs"></div></div>
+<div class="card"><div class="card-head"><h3><i class="fas fa-plus-circle"></i>Add Audit</h3></div>
+<div style="display:flex;gap:8px;align-items:flex-end"><select class="select" id="auditDay" style="width:120px">${Array.from({length:7},(_,i)=>`<option value="${i+1}"${i+1===S.currentDay?' selected':''}>Day ${i+1}</option>`).join('')}</select>
+<textarea class="textarea" id="auditText" placeholder="Be brutally honest..." style="min-height:60px;flex:1"></textarea>
+<button class="btn btn-primary" id="auditAddBtn"><i class="fas fa-save"></i>Save</button></div></div>
+<div id="auditList"></div>`;
+
+const tabs=$('auditTabs');
+['all',...Array.from({length:7},(_,i)=>''+(i+1))].forEach(v=>{
+const t=el('button','tab'+(filterDay===v?' active':''),v==='all'?'All':'Day '+v);
+t.onclick=()=>{filterDay=v;render()};tabs.appendChild(t);
+});
+
+const list=$('auditList');
+for(let d=1;d<=DAYS;d++){
+if(filterDay!=='all'&&''+d!==filterDay)continue;
+const a=S.audits[d];if(!a)continue;
+if(search&&!a.toLowerCase().includes(search.toLowerCase()))continue;
+list.innerHTML+=`<div class="entry"><div class="entry-head"><span class="entry-day">Day ${d}</span></div><div class="entry-text">${a}</div>
+<div class="entry-actions"><button class="btn btn-ghost btn-sm" onclick="editAudit(${d})"><i class="fas fa-edit"></i>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteAudit(${d})"><i class="fas fa-trash"></i>Delete</button></div></div>`;
+}
+if(!list.innerHTML)list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">No audits found</div>';
+
+$('auditSearch').oninput=e=>{search=e.target.value;render()};
+$('auditAddBtn').onclick=()=>{
+const d=+$('auditDay').value,t=$('auditText').value.trim();
+if(!t){toast('Write an audit first','error');return}
+S.audits[d]=t;save();addActivity(`Saved audit for Day ${d}`,'purple');toast('Audit saved!');updateGlobals();render();
 };
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function showModal(title, message, icon = 'success') {
-      const overlay = document.getElementById('modal-overlay');
-      const titleEl = document.getElementById('modal-title');
-      const messageEl = document.getElementById('modal-message');
-      const iconEl = document.getElementById('modal-icon');
-
-      titleEl.textContent = title;
-      messageEl.textContent = message;
-
-      iconEl.className = 'modal-icon';
-      if (icon === 'success') {
-        iconEl.innerHTML = '<i class="fas fa-check-circle"></i>';
-        iconEl.classList.add('success');
-      } else if (icon === 'info') {
-        iconEl.innerHTML = '<i class="fas fa-info-circle"></i>';
-        iconEl.classList.add('info');
-      }
-
-      overlay.classList.add('show');
-      setTimeout(() => {
-        overlay.classList.remove('show');
-      }, 2500);
-    }
-
-    function closeModal() {
-      const overlay = document.getElementById('modal-overlay');
-      overlay.classList.remove('show');
-    }
-
-    function renderDayNav() {
-      const nav = document.getElementById('day-nav');
-      nav.innerHTML = '';
-      for (let i = 1; i <= DAYS; i++) {
-        const dayTasks = tasksData[i] || [];
-let completedTasks = 0;
-let totalTasks = dayTasks.length;
-
-for (let j = 0; j < dayTasks.length; j++) {
-  if (state.completed[`task-${i}-${j}`]) {
-    completedTasks++;
-  }
 }
-
-const completionRate =
-  totalTasks > 0 ? completedTasks / totalTasks : 0;
-
-let dayCompleted = completionRate >= 0.8;
-        const dayItem = document.createElement('div');
-        dayItem.className = 'day-item' + (i === state.currentDay ? ' active' : '') + (dayCompleted ? ' completed' : '');
-        dayItem.textContent = `Day ${i}`;
-        dayItem.onclick = () => switchDay(i);
-        nav.appendChild(dayItem);
-      }
-    }
-
-    function switchDay(day) {
-      state.currentDay = day;
-      saveState();
-      renderDayNav();
-      renderContent();
-      updateStats();
-    }
-
-    function renderContent() {
-      const day = state.currentDay;
-      document.getElementById('current-day').textContent = day;
-
-      document.getElementById('goals-input').value = state.goals[day] || '';
-      document.getElementById('audit-input').value = state.audit[day] || '';
-      renderRewards();
-      renderTasks();
-      renderCustomTasks();
-    }
-
-    function renderTasks() {
-      const day = state.currentDay;
-      const container = document.getElementById('tasks-container');
-      container.innerHTML = '';
-      const dayTasks = tasksData[day] || [];
-
-      dayTasks.forEach((task, idx) => {
-        const taskId = `task-${day}-${idx}`;
-        const isCompleted = state.completed[taskId] || false;
-
-        const taskDiv = document.createElement('div');
-        taskDiv.className = 'task-item' + (isCompleted ? ' completed' : '');
-        taskDiv.innerHTML = `
-          <div class="task-checkbox" onclick="toggleTask('${taskId}', event)">
-            ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
-          </div>
-          <div class="task-content">
-            <div class="task-header">
-              <span class="task-text">${task.name}</span>
-              <span class="task-xp">+${task.xp} XP</span>
-            </div>
-            <div class="task-meta">${task.category}</div>
-          </div>
-        `;
-        container.appendChild(taskDiv);
-      });
-    }
-          function renderRewards() {
-  const container = document.getElementById('reward-list');
-
-  container.innerHTML = '';
-
-  rewards.forEach(reward => {
-    const unlocked =
-      state.rewardsUnlocked.includes(reward.id);
-
-    const div = document.createElement('div');
-
-    div.className = 'reward-item';
-
-    div.style.opacity = unlocked ? '1' : '0.5';
-
-    div.innerHTML = `
-      <span class="reward-name">
-        ${reward.title}
-        ${unlocked ? '✅' : '🔒'}
-      </span>
-
-      <span class="reward-xp">
-        ${reward.xp} XP
-      </span>
-    `;
-
-    container.appendChild(div);
-  });
+render();
 }
-
-    function renderCustomTasks() {
-      const day = state.currentDay;
-      const container = document.getElementById('custom-tasks-container');
-      const dayCustom = state.customTasks[day] || [];
-
-      container.innerHTML = '';
-
-      if (dayCustom.length > 0) {
-        const label = document.createElement('div');
-        label.style.cssText = 'font-size: 13px; font-weight: 700; margin: 1.5rem 0 1rem; padding-top: 1.5rem; border-top: 2px solid var(--light);';
-        label.innerHTML = '<i class="fas fa-star"></i> Your Custom Tasks';
-        container.appendChild(label);
-
-        dayCustom.forEach((task, idx) => {
-          const taskId = task.id;
-          const isCompleted = state.completed[taskId] || false;
-
-          const taskDiv = document.createElement('div');
-          taskDiv.className = 'task-item' + (isCompleted ? ' completed' : '');
-          taskDiv.innerHTML = `
-            <div class="task-checkbox" onclick="toggleTask('${taskId}', event)">
-              ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
-            </div>
-            <div class="task-content">
-              <div class="task-header">
-                <span class="task-text">${task.name}</span>
-                <span class="task-xp">+${task.xp} XP</span>
-              </div>
-              <div class="task-meta">
-                Custom •
-                <button onclick="deleteCustomTask('${task.id}')"style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px; text-decoration: underline; padding: 0; margin-left: 8px;">Delete</button>
-              </div>
-            </div>
-          `;
-          container.appendChild(taskDiv);
-        });
-      }
-
-    }
-
-    function toggleTask(taskId, event) {
-      event.stopPropagation();
-      state.completed[taskId] = !state.completed[taskId];
-
-if (state.completed[taskId]) {
-  state.completedDates[taskId] = new Date().toDateString();
-} else {
-  delete state.completedDates[taskId];
-}
-      saveState();
-      updateStats();
-      renderRewards();
-      renderTasks();
-      renderCustomTasks();
-    }
-
-    function addCustomTask() {
-      const day = state.currentDay;
-      const nameInput = document.getElementById('task-input');
-      const xpInput = document.getElementById('xp-input');
-
-      if (!nameInput.value.trim()) {
-        showModal('Oops!', 'Please enter a task name', 'info');
-        return;
-      }
-
-if (!state.customTasks[day]) state.customTasks[day] = [];
-
-const xpValue = Math.min(
-  Math.max(parseInt(xpInput.value) || 20, 5),
-  50
-);
-
-state.customTasks[day].push({
-  id: crypto.randomUUID(),
-  name: nameInput.value.trim(),
-  xp: xpValue
+window.editAudit=function(d){
+showModal('Edit Audit',`Edit audit for Day ${d}?`,()=>{
+const t=prompt('Edit audit for Day '+d+':',S.audits[d]||'');
+if(t!==null){S.audits[d]=t;save();toast('Audit updated!');renderAudits();}
 });
-      saveState();
-      nameInput.value = '';
-      xpInput.value = 20;
-      renderContent();
-      updateStats();
-      renderRewards();
-      showModal('Task Added!', `"${state.customTasks[day][state.customTasks[day].length - 1].name}" added successfully`, 'success');
-    }
-
-    function deleteCustomTask(taskId){
-      const day = state.currentDay;
-      if (confirm('Delete this custom task?')) {
-        state.customTasks[day] =
-  state.customTasks[day].filter(
-    task => task.id !== taskId
-  );
-        saveState();
-        renderContent();
-        updateStats();
-        renderRewards();
-      }
-    }
-
-    function saveGoals() {
-      const input = document.getElementById('goals-input');
-      state.goals[state.currentDay] = input.value;
-      saveState();
-      showModal('Goals Saved!', `Tomorrow's goals saved for Day ${state.currentDay}`, 'success');
-    }
-
-    function saveAudit() {
-      const input = document.getElementById('audit-input');
-      state.audit[state.currentDay] = input.value;
-      saveState();
-      showModal('Audit Saved!', `Today's audit saved for Day ${state.currentDay}`, 'success');
-    }
-
-    function updateStats() {
-      let xp = 0;
-      Object.keys(state.completed).forEach(taskId => {
-        if (state.completed[taskId]) {
-if (taskId.startsWith('task-')) {
-  const parts = taskId.split('-');
-  const day = parseInt(parts[1]);
-  const idx = parseInt(parts[2]);
-
-  xp += tasksData[day]?.[idx]?.xp || 0;
-
-} else {
-
-  for (const day in state.customTasks) {
-
-    const foundTask =
-      state.customTasks[day].find(
-        task => task.id === taskId
-      );
-
-    if (foundTask) {
-      xp += foundTask.xp;
-      break;
-    }
-  }
-}
-        }
-      });
-
-      state.totalXP = xp;
-      rewards.forEach(reward => {
-  const alreadyUnlocked =
-    state.rewardsUnlocked.includes(reward.id);
-
-  if (xp >= reward.xp && !alreadyUnlocked) {
-    state.rewardsUnlocked.push(reward.id);
-
-    showModal(
-      'Reward Unlocked!',
-      `${reward.title} unlocked at ${reward.xp} XP`,
-      'success'
-    );
-  }
+};
+window.deleteAudit=function(d){
+showModal('Delete Audit','Delete audit for Day '+d+'?',()=>{
+delete S.audits[d];save();addActivity(`Deleted audit for Day ${d}`,'amber');toast('Audit deleted');renderAudits();
 });
-      document.getElementById('header-xp').textContent = xp;
+};
 
-let streak = 0;
+// REWARDS PAGE
+function renderRewardsPage(){
+const pg=$('pg-rewards');
+pg.innerHTML=`<div class="grid-2"><div><div class="card"><div class="card-head"><h3><i class="fas fa-trophy"></i>Rewards</h3><span style="font-size:12px;color:var(--text2)">${S.unlockedRewards.length}/${REWARDS.length} unlocked</span></div>
+<div class="pbar" style="margin-bottom:16px"><div class="fill" style="width:${Math.round(S.unlockedRewards.length/REWARDS.length*100)}%"></div></div>
+<div id="rwList"></div></div></div>
+<div><div class="card"><div class="card-head"><h3><i class="fas fa-medal"></i>Achievement Badges</h3><span style="font-size:12px;color:var(--text2)">${S.earnedBadges.length}/${BADGES.length} earned</span></div>
+<div class="badge-grid" id="badgeGrid"></div></div></div></div>`;
 
-for (let day = 1; day <= DAYS; day++) {
-  const totalTasks = (tasksData[day]?.length || 0) +
-    (state.customTasks[day]?.length || 0);
+const rl=$('rwList');
+REWARDS.forEach(r=>{
+const u=S.unlockedRewards.includes(r.id);
+const p=Math.min(100,Math.round(S.totalXP/r.xp*100));
+rl.innerHTML+=`<div class="reward ${u?'unlocked':'locked'}"><div class="r-icon">${u?'✅':'🔒'}</div><div class="r-info"><div class="r-name">${r.icon} ${r.title}</div><div class="r-xp">${u?'Unlocked!':S.totalXP+'/'+r.xp+' XP ('+p+'%)'}</div>${u?'':'<div class="pbar"><div class="fill" style="width:'+p+'%"></div></div>'}</div></div>`;
+});
 
-  let completedTasks = 0;
-
-  // built-in tasks
-  for (let i = 0; i < (tasksData[day]?.length || 0); i++) {
-    if (state.completed[`task-${day}-${i}`]) {
-      completedTasks++;
-    }
-  }
-
-  // custom tasks
-  for (let i = 0; i < (state.customTasks[day]?.length || 0); i++) {
-    if (state.completed[`custom-${day}-${i}`]) {
-      completedTasks++;
-    }
-  }
-
-  const completionRate =
-    totalTasks > 0 ? completedTasks / totalTasks : 0;
-
-  // require 80% completion
-  if (completionRate >= 0.8) {
-    streak++;
-  } else {
-    break;
-  }
+const bg=$('badgeGrid');
+BADGES.forEach(b=>{
+const e=S.earnedBadges.includes(b.id);
+bg.innerHTML+=`<div class="badge-item ${e?'earned':'locked'}"><div class="b-icon">${b.icon}</div><div class="b-name">${b.name}</div></div>`;
+});
 }
 
-state.streak = streak;
-      document.getElementById('header-streak').textContent = streak;
+// STATS PAGE
+function renderStats(){
+const pg=$('pg-stats');
+const catXP={};const catDone={};const catTotal={};
+for(let d=1;d<=DAYS;d++){
+(TASKS[d]||[]).forEach((t,i)=>{
+if(!catXP[t.cat])catXP[t.cat]=0;
+if(!catDone[t.cat])catDone[t.cat]=0;
+if(!catTotal[t.cat])catTotal[t.cat]=0;
+catTotal[t.cat]++;
+if(S.completed[`t-${d}-${i}`]){catXP[t.cat]+=t.xp;catDone[t.cat]++}
+});
+}
 
-      const streakAlert = document.getElementById('streak-alert');
-      if (streak > 0) {
-        streakAlert.classList.add('show');
-      } else {
-        streakAlert.classList.remove('show');
-      }
+const dayData=Array.from({length:7},(_,i)=>{const d=i+1;return{day:d,pct:calcDayPct(d)}});
+const maxBar=Math.max(...dayData.map(d=>d.pct),1);
 
-      saveState();
-    }
+pg.innerHTML=`
+<div class="grid-3">
+<div class="stat-card purple"><div class="icon"><i class="fas fa-bolt"></i></div><div class="val">${S.totalXP}</div><div class="label">Total XP</div></div>
+<div class="stat-card green"><div class="icon"><i class="fas fa-check-double"></i></div><div class="val">${calcOverallPct()}%</div><div class="label">Completion Rate</div></div>
+<div class="stat-card amber"><div class="icon"><i class="fas fa-fire"></i></div><div class="val">${S.streak}</div><div class="label">Current Streak</div></div>
+</div>
 
-    function exportData() {
-      const dataStr = JSON.stringify(state, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `restart-progress-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      showModal('Progress Exported!', 'Your progress has been downloaded. Keep it safe!', 'success');
-    }
+<div class="grid-2">
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-chart-bar"></i>Daily Completion</h3></div>
+<div style="display:flex;align-items:flex-end;gap:8px;height:160px;padding-top:10px">
+${dayData.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:11px;font-weight:600;color:var(--text2)">${d.pct}%</div><div style="width:100%;background:${d.pct>=80?'var(--green)':'var(--accent)'};border-radius:4px 4px 0 0;height:${Math.max(4,d.pct/maxBar*120)}px;transition:height .3s"></div><div style="font-size:11px;color:var(--text3)">D${d.day}</div></div>`).join('')}
+</div>
+</div>
 
-    loadState();
-    renderDayNav();
-    renderContent();
-    updateStats();
-  </script>
-</body>
-</html>
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-layer-group"></i>Category Breakdown</h3></div>
+${Object.keys(catTotal).map(c=>{
+const pct=catTotal[c]?Math.round(catDone[c]/catTotal[c]*100):0;
+return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:600">${c}</span><span style="color:var(--text3)">${catDone[c]}/${catTotal[c]} (${pct}%)</span></div><div class="pbar"><div class="fill green" style="width:${pct}%"></div></div></div>`;
+}).join('')}
+</div>
+</div>
+
+<div class="card">
+<div class="card-head"><h3><i class="fas fa-history"></i>Activity Timeline</h3></div>
+<div id="statActivity" style="max-height:300px;overflow-y:auto"></div>
+</div>`;
+
+const sa=$('statActivity');
+if(!S.activity.length)sa.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">No activity yet</div>';
+else S.activity.slice(0,30).forEach(a=>{
+sa.innerHTML+=`<div class="activity-item"><div class="activity-dot ${a.type}"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${fmtDate(a.time)}</div></div></div>`;
+});
+}
+
+// EXPORT/IMPORT
+$('exportBtn').onclick=()=>{
+const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+const u=URL.createObjectURL(b);const a=el('a');a.href=u;a.download=`restart-${new Date().toISOString().split('T')[0]}.json`;a.click();URL.revokeObjectURL(u);
+toast('Progress exported!');
+};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=e=>{
+const f=e.target.files[0];if(!f)return;
+const r=new FileReader();r.onload=ev=>{
+try{const d=JSON.parse(ev.target.result);S={...S,...d};save();updateGlobals();renderDayNav();switchPage(currentPage);toast('Data imported!')}
+catch(err){toast('Invalid file','error')}
+};r.readAsText(f);
+};
+
+// THEME
+$('themeBtn').onclick=()=>{
+S.theme=S.theme==='dark'?'light':'dark';
+document.body.className=S.theme==='light'?'light':'';
+$('themeBtn').innerHTML=S.theme==='dark'?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+save();
+};
+
+// NAV
+document.querySelectorAll('.nav-item').forEach(n=>{
+n.addEventListener('click',()=>switchPage(n.dataset.page));
+});
+
+// KEYBOARD
+document.addEventListener('keydown',e=>{
+if(e.key==='Escape')$('modalBg').classList.remove('open');
+if(e.ctrlKey&&e.key==='e'){e.preventDefault();$('exportBtn').click()}
+});
+
+// INIT
+load();
+if(S.theme==='light'){document.body.className='light';$('themeBtn').innerHTML='<i class="fas fa-moon"></i>'}
+updateGlobals();renderDayNav();renderDashboard();
